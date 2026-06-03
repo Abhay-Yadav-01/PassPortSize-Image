@@ -76,6 +76,13 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
               <span className="value-badge">{borderWidthMm.toFixed(1)} mm</span>
             </label>
             <div className="slider-row">
+              <button
+                className="slider-adj-btn"
+                aria-label="Decrease border width by 0.1"
+                onClick={() => setBorderWidthMm((prev) => Math.max(0, Number((prev - 0.1).toFixed(1))))}
+              >
+                -
+              </button>
               <input
                 type="range"
                 min="0"
@@ -88,6 +95,13 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
                 aria-valuenow={borderWidthMm}
                 onChange={(e) => setBorderWidthMm(Number(e.target.value))}
               />
+              <button
+                className="slider-adj-btn"
+                aria-label="Increase border width by 0.1"
+                onClick={() => setBorderWidthMm((prev) => Math.min(5, Number((prev + 0.1).toFixed(1))))}
+              >
+                +
+              </button>
             </div>
           </div>
 
@@ -121,6 +135,13 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
               <span className="value-badge">{gapXMm.toFixed(1)} mm</span>
             </label>
             <div className="slider-row">
+              <button
+                className="slider-adj-btn"
+                aria-label="Decrease horizontal gap by 0.1"
+                onClick={() => setGapXMm((prev) => Math.max(0, Number((prev - 0.1).toFixed(1))))}
+              >
+                -
+              </button>
               <input
                 type="range"
                 min="0"
@@ -133,6 +154,13 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
                 aria-valuenow={gapXMm}
                 onChange={(e) => setGapXMm(Number(e.target.value))}
               />
+              <button
+                className="slider-adj-btn"
+                aria-label="Increase horizontal gap by 0.1"
+                onClick={() => setGapXMm((prev) => Math.min(10, Number((prev + 0.1).toFixed(1))))}
+              >
+                +
+              </button>
             </div>
           </div>
 
@@ -142,6 +170,13 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
               <span className="value-badge">{gapYMm.toFixed(1)} mm</span>
             </label>
             <div className="slider-row">
+              <button
+                className="slider-adj-btn"
+                aria-label="Decrease vertical gap by 0.1"
+                onClick={() => setGapYMm((prev) => Math.max(0, Number((prev - 0.1).toFixed(1))))}
+              >
+                -
+              </button>
               <input
                 type="range"
                 min="0"
@@ -154,6 +189,13 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
                 aria-valuenow={gapYMm}
                 onChange={(e) => setGapYMm(Number(e.target.value))}
               />
+              <button
+                className="slider-adj-btn"
+                aria-label="Increase vertical gap by 0.1"
+                onClick={() => setGapYMm((prev) => Math.min(10, Number((prev + 0.1).toFixed(1))))}
+              >
+                +
+              </button>
             </div>
           </div>
 
