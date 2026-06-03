@@ -762,6 +762,11 @@ body {
 .a4-sheet {
   width: 210mm;
   height: 297mm;
+  min-width: 210mm;
+  min-height: 297mm;
+  max-width: 210mm;
+  max-height: 297mm;
+  flex-shrink: 0;
   background: #ffffff;
   color: #000000;
   box-shadow: 0 15px 45px rgba(0, 0, 0, 0.55), 0 0 2px rgba(0,0,0,0.1);

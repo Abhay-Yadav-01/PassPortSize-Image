@@ -69,7 +69,7 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
         <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "16px", color: "white" }}>
           Arrangement Layout Controls
         </h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px", alignItems: "end" }}>
           <div className="control-group">
             <label id="border-width-slider-label">
               <span>Photo Border Width</span>
@@ -156,38 +156,30 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
               />
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Dynamic Statistics Widgets */}
-      <div className="sheet-stats">
-        <div className="stat-card">
-          <span className="stat-label">Total Photo Copies</span>
-          <span className="stat-value">{totalOccupied} Total</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Page {pageIndex + 1} Slots</span>
-          <span className="stat-value">{currentPageFilled} / {slotsPerPage} Filled</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">Page Utilization</span>
-          <span className="stat-value">{currentPageUtilization}%</span>
-          <div className="utilization-bar-bg">
-            <div
-              className="utilization-bar-fill"
-              style={{ width: `${currentPageUtilization}%` }}
-            ></div>
+          <div className="control-group" style={{ gridColumn: "span 1" }}>
+            <label style={{ visibility: "hidden" }}>Export Action</label>
+            <div className="slider-row">
+              <button
+                className="btn-export-pdf"
+                disabled={totalOccupied === 0 || isGenerating}
+                onClick={handleExportPDF}
+                style={{
+                  width: "100%",
+                  height: "36px",
+                  padding: "0 16px",
+                  margin: 0,
+                  fontSize: "14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px"
+                }}
+              >
+                {isGenerating ? "Exporting..." : "📥 Export PDF"}
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="stat-card export-card">
-          <span className="stat-label">Actions</span>
-          <button
-            className="btn-export-pdf"
-            disabled={totalOccupied === 0 || isGenerating}
-            onClick={handleExportPDF}
-          >
-            {isGenerating ? "Exporting..." : "📥 Export PDF"}
-          </button>
         </div>
       </div>
 
@@ -288,6 +280,28 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </div>
+
+      {/* Dynamic Statistics Widgets (Moved below the A4 Sheet preview) */}
+      <div className="sheet-stats" style={{ marginTop: "24px" }}>
+        <div className="stat-card">
+          <span className="stat-label">Total Photo Copies</span>
+          <span className="stat-value">{totalOccupied} Total</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-label">Page {pageIndex + 1} Slots</span>
+          <span className="stat-value">{currentPageFilled} / {slotsPerPage} Filled</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-label">Page Utilization</span>
+          <span className="stat-value">{currentPageUtilization}%</span>
+          <div className="utilization-bar-bg">
+            <div
+              className="utilization-bar-fill"
+              style={{ width: `${currentPageUtilization}%` }}
+            ></div>
           </div>
         </div>
       </div>
