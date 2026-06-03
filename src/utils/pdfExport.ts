@@ -72,7 +72,13 @@ async function processHighResImage(photo: LayoutPhotoItem): Promise<string> {
  * Generates and downloads a multi-page, print-ready, physical millimeter A4 PDF document.
  * Draws high-resolution uncompressed cropped images at exactly correct physical scales.
  */
-export async function exportToPDF(photos: LayoutPhotoItem[]): Promise<void> {
+export async function exportToPDF(
+  photos: LayoutPhotoItem[],
+  marginMm: number = 5,
+  gapXMm: number = 0.7,
+  gapYMm: number = 0.7,
+  borderWidthMm: number = 0
+): Promise<void> {
   const pages = buildSheetSlots(photos);
   
   // Create jsPDF in portrait orientation using millimeters
@@ -86,7 +92,7 @@ export async function exportToPDF(photos: LayoutPhotoItem[]): Promise<void> {
   const activeAspect = activePhoto?.aspect ?? 35 / 40;
 
   // Retrieve exact millimeter specifications
-  const layout = calculateSheetLayout(activeAspect);
+  const layout = calculateSheetLayout(activeAspect, marginMm, gapXMm, gapYMm);
 
   for (let pageIdx = 0; pageIdx < pages.length; pageIdx++) {
     if (pageIdx > 0) {
@@ -111,8 +117,8 @@ export async function exportToPDF(photos: LayoutPhotoItem[]): Promise<void> {
       const row = Math.floor(index / layout.columnsCount);
 
       // Math coordinates in millimeters
-      const x = layout.marginLeftMm + col * (layout.slotWidthMm + 0.7);
-      const y = layout.marginTopMm + row * (layout.slotHeightMm + 0.7);
+      const x = layout.marginLeftMm + col * (layout.slotWidthMm + gapXMm);
+      const y = layout.marginTopMm + row * (layout.slotHeightMm + gapYMm);
 
       const slot = slots[index];
 
@@ -120,14 +126,14 @@ export async function exportToPDF(photos: LayoutPhotoItem[]): Promise<void> {
         const croppedDataUrl = processedImages[index];
 
         if (croppedDataUrl) {
-          // Draw uncompressed, cropped high-res image
+          // Draw uncompressed, cropped high-res image inset by borderWidthMm
           pdf.addImage(
             croppedDataUrl,
             "PNG",
-            x,
-            y,
-            layout.slotWidthMm,
-            layout.slotHeightMm
+            x + borderWidthMm,
+            y + borderWidthMm,
+            layout.slotWidthMm - 2 * borderWidthMm,
+            layout.slotHeightMm - 2 * borderWidthMm
           );
         }
 

@@ -16,10 +16,8 @@ export type LayoutPhotoItem = {
 
 export const A4_WIDTH_MM = 210;
 export const A4_HEIGHT_MM = 297;
-export const MARGIN_MM = 5; // 0.5 cm borders margins
-export const GRID_COLUMNS = 6; // 6 vertical columns must
-export const GRID_ROWS = 8; // 8 rows = 48 copies per sheet
-export const GRID_GAP_MM = 0.7;
+export const GRID_COLUMNS = 6;
+export const GRID_ROWS = 5; // 30 slots per sheet always
 
 export type SheetLayout = {
   slotWidthMm: number;
@@ -37,30 +35,42 @@ export type SheetLayout = {
 
 /**
  * Computes available paper dimensions and sizes the grid slots based on physical A4 constraints.
- * Usable Width = 210 - 5 - 5 = 200 mm
- * Usable Height = 297 - 5 - 5 = 287 mm
+ * Ensures the slot grid maintains aspect ratio and fits completely within printable bounds.
  */
-export function calculateSheetLayout(aspectRatio: number): SheetLayout {
-  const usableWidthMm = A4_WIDTH_MM - MARGIN_MM * 2;   // 200 mm
-  const usableHeightMm = A4_HEIGHT_MM - MARGIN_MM * 2; // 287 mm
+export function calculateSheetLayout(
+  aspectRatio: number,
+  marginMm: number = 5,
+  gapXMm: number = 0.7,
+  gapYMm: number = 0.7
+): SheetLayout {
+  const usableWidthMm = A4_WIDTH_MM - marginMm * 2;
+  const usableHeightMm = A4_HEIGHT_MM - marginMm * 2;
 
-  const totalGapWidth = (GRID_COLUMNS - 1) * GRID_GAP_MM; // 5 gaps * 0.7mm = 3.5 mm
-  const totalGapHeight = (GRID_ROWS - 1) * GRID_GAP_MM;   // 7 gaps * 0.7mm = 4.9 mm
+  const totalGapWidth = (GRID_COLUMNS - 1) * gapXMm;
+  const totalGapHeight = (GRID_ROWS - 1) * gapYMm;
 
-  // Columns are the permanent width unit to span the sheet usable width perfectly
-  const slotWidthMm = (usableWidthMm - totalGapWidth) / GRID_COLUMNS; // (200 - 3.5) / 6 = 32.75 mm
-  
-  // Height adjusts to maintain the crop aspect ratio perfectly
-  const slotHeightMm = slotWidthMm / aspectRatio;
+  // Containment math to calculate max limits
+  const maxSlotWidthMm = (usableWidthMm - totalGapWidth) / GRID_COLUMNS;
+  const maxSlotHeightMm = (usableHeightMm - totalGapHeight) / GRID_ROWS;
+
+  let slotWidthMm = maxSlotWidthMm;
+  let slotHeightMm = slotWidthMm / aspectRatio;
+
+  if (slotHeightMm > maxSlotHeightMm) {
+    slotHeightMm = maxSlotHeightMm;
+    slotWidthMm = slotHeightMm * aspectRatio;
+  }
 
   // Grid dimensions
   const gridWidthMm = GRID_COLUMNS * slotWidthMm + totalGapWidth;
   const gridHeightMm = GRID_ROWS * slotHeightMm + totalGapHeight;
 
-  // Horizontally fills usableWidth perfectly (offsetX = 0).
-  const offsetX = 0;
-  // Center vertically if it fits, else align top inside margin
-  const offsetY = Math.max(0, (usableHeightMm - gridHeightMm) / 2);
+  // Center horizontally within the printable margin area
+  const offsetX = (usableWidthMm - gridWidthMm) / 2;
+
+  // Align to the top of the printable margin area (no vertical centering) to reduce top spacing
+  const marginTopMm = marginMm;
+  const marginLeftMm = marginMm + offsetX;
 
   return {
     slotWidthMm,
@@ -69,9 +79,9 @@ export function calculateSheetLayout(aspectRatio: number): SheetLayout {
     gridHeightMm,
     usableWidthMm,
     usableHeightMm,
-    marginMm: MARGIN_MM,
-    marginTopMm: MARGIN_MM + offsetY,
-    marginLeftMm: MARGIN_MM + offsetX,
+    marginMm,
+    marginTopMm,
+    marginLeftMm,
     columnsCount: GRID_COLUMNS,
     rowsCount: GRID_ROWS,
   };
@@ -79,12 +89,12 @@ export function calculateSheetLayout(aspectRatio: number): SheetLayout {
 
 /**
  * Packs photos with copy counts into a multi-page array structure.
- * Each page contains exactly 48 slots (6 columns x 8 rows).
+ * Each page contains exactly 30 slots (6 columns x 5 rows).
  */
 export function buildSheetSlots(photos: LayoutPhotoItem[]): (LayoutPhotoItem | null)[][] {
   const pages: (LayoutPhotoItem | null)[][] = [];
   let currentPageSlots: (LayoutPhotoItem | null)[] = [];
-  const slotsPerPage = GRID_COLUMNS * GRID_ROWS; // 48 copies per sheet
+  const slotsPerPage = GRID_COLUMNS * GRID_ROWS; // 30 copies per sheet
 
   for (const photo of photos) {
     const copies = photo.copies || 0;

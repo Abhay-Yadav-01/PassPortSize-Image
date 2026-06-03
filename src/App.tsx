@@ -467,19 +467,51 @@ function App() {
     }
 
     if (currentStep === 3) {
-      return (
-        <img
-          src={selectedPhoto.previewUrl}
-          alt="Adjust preview"
-          className="preview-image"
-          style={{
+      const { croppedArea, brightness, contrast, saturation } = selectedPhoto;
+
+      const imageStyle: React.CSSProperties = croppedArea
+        ? {
+            position: "absolute",
+            width: `${(100 / croppedArea.width) * 100}%`,
+            height: `${(100 / croppedArea.height) * 100}%`,
+            left: `-${(croppedArea.x / croppedArea.width) * 100}%`,
+            top: `-${(croppedArea.y / croppedArea.height) * 100}%`,
             filter: `
-              brightness(${100 + selectedPhoto.brightness}%)
-              contrast(${100 + selectedPhoto.contrast}%)
-              saturate(${100 + selectedPhoto.saturation}%)
+              brightness(${100 + brightness}%)
+              contrast(${100 + contrast}%)
+              saturate(${100 + saturation}%)
             `,
+          }
+        : {
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            filter: `
+              brightness(${100 + brightness}%)
+              contrast(${100 + contrast}%)
+              saturate(${100 + saturation}%)
+            `,
+          };
+
+      const aspect = selectedPhoto.aspect ?? 35 / 40;
+
+      return (
+        <div
+          className="photo-container"
+          style={{
+            aspectRatio: aspect,
+            height: "100%",
+            maxHeight: "100%",
+            maxWidth: "100%",
+            position: "relative",
           }}
-        />
+        >
+          <img
+            src={selectedPhoto.previewUrl}
+            alt="Adjust preview"
+            style={imageStyle}
+          />
+        </div>
       );
     }
 

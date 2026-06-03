@@ -14,7 +14,12 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Split photos into grid slots divided across pages (48 slots per page)
+  // States for Arrangement Controls
+  const [borderWidthMm, setBorderWidthMm] = useState(0);
+  const [gapXMm, setGapXMm] = useState(0.7);
+  const [gapYMm, setGapYMm] = useState(0.7);
+
+  // Split photos into grid slots divided across pages (30 slots per page)
   const pages = buildSheetSlots(photos);
   
   // Guard page range selection
@@ -26,7 +31,7 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
   const activeAspect = activePhoto?.aspect ?? 35 / 40;
 
   // Physical Layout Dimensions Math (calculated in mm)
-  const layout = calculateSheetLayout(activeAspect);
+  const layout = calculateSheetLayout(activeAspect, 5, gapXMm, gapYMm);
 
   const slotsPerPage = layout.columnsCount * layout.rowsCount;
 
@@ -38,7 +43,7 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
   const handleExportPDF = async () => {
     setIsGenerating(true);
     try {
-      await exportToPDF(photos);
+      await exportToPDF(photos, 5, gapXMm, gapYMm, borderWidthMm);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert("PDF generation failed. Please ensure you have uploaded photos and try again.");
@@ -57,6 +62,77 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
           <p className="loading-subtitle">Applying lossless cropping and filters on original files...</p>
         </div>
       )}
+
+      {/* Arrangement Controls Panel */}
+      <div className="controls-panel arrangement-controls-panel" style={{ marginTop: 0 }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "16px", color: "white" }}>
+          Arrangement Layout Controls
+        </h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px" }}>
+          <div className="control-group">
+            <label id="border-width-slider-label">
+              <span>Photo Border Width</span>
+              <span className="value-badge">{borderWidthMm.toFixed(1)} mm</span>
+            </label>
+            <div className="slider-row">
+              <input
+                type="range"
+                min="0"
+                max="5"
+                step="0.1"
+                value={borderWidthMm}
+                aria-labelledby="border-width-slider-label"
+                aria-valuemin={0}
+                aria-valuemax={5}
+                aria-valuenow={borderWidthMm}
+                onChange={(e) => setBorderWidthMm(Number(e.target.value))}
+              />
+            </div>
+          </div>
+
+          <div className="control-group">
+            <label id="gap-x-slider-label">
+              <span>Horizontal Gap</span>
+              <span className="value-badge">{gapXMm.toFixed(1)} mm</span>
+            </label>
+            <div className="slider-row">
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="0.1"
+                value={gapXMm}
+                aria-labelledby="gap-x-slider-label"
+                aria-valuemin={0}
+                aria-valuemax={10}
+                aria-valuenow={gapXMm}
+                onChange={(e) => setGapXMm(Number(e.target.value))}
+              />
+            </div>
+          </div>
+
+          <div className="control-group">
+            <label id="gap-y-slider-label">
+              <span>Vertical Gap</span>
+              <span className="value-badge">{gapYMm.toFixed(1)} mm</span>
+            </label>
+            <div className="slider-row">
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="0.1"
+                value={gapYMm}
+                aria-labelledby="gap-y-slider-label"
+                aria-valuemin={0}
+                aria-valuemax={10}
+                aria-valuenow={gapYMm}
+                onChange={(e) => setGapYMm(Number(e.target.value))}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Dynamic Statistics Widgets */}
       <div className="sheet-stats">
@@ -127,8 +203,8 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
               display: "grid",
               gridTemplateColumns: `repeat(${layout.columnsCount}, 1fr)`,
               gridTemplateRows: `repeat(${layout.rowsCount}, 1fr)`,
-              columnGap: `${(0.7 / layout.gridWidthMm) * 100}%`,
-              rowGap: `${(0.7 / layout.gridHeightMm) * 100}%`,
+              columnGap: `${(gapXMm / layout.gridWidthMm) * 100}%`,
+              rowGap: `${(gapYMm / layout.gridHeightMm) * 100}%`,
             }}
           >
             {slots.map((slot, index) => {
@@ -168,12 +244,21 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
 
               return (
                 <div key={`slot-${slot.id}-${index}`} className="grid-slot occupied">
-                  <div className="photo-container">
-                    <img
-                      src={slot.previewUrl}
-                      alt="Grid cell"
-                      style={imageStyle}
-                    />
+                  <div className="photo-container" style={{ background: "white" }}>
+                    <div style={{
+                      position: "absolute",
+                      left: `${borderWidthMm}mm`,
+                      top: `${borderWidthMm}mm`,
+                      right: `${borderWidthMm}mm`,
+                      bottom: `${borderWidthMm}mm`,
+                      overflow: "hidden"
+                    }}>
+                      <img
+                        src={slot.previewUrl}
+                        alt="Grid cell"
+                        style={imageStyle}
+                      />
+                    </div>
                   </div>
                 </div>
               );
