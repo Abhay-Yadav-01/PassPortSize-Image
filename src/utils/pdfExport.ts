@@ -93,8 +93,8 @@ function setPdfFillColor(pdf: jsPDF, hex: string) {
 export async function exportToPDF(
   photos: LayoutPhotoItem[],
   marginMm: number = 5,
-  gapXMm: number = 0.9,
-  gapYMm: number = 0.9,
+  gapXMm: number = 1.4,
+  gapYMm: number = 1.4,
   borderWidthMm: number = 0.6,
   borderColor: string = "#000000"
 ): Promise<void> {
