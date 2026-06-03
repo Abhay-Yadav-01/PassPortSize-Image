@@ -14,10 +14,11 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // States for Arrangement Controls
-  const [borderWidthMm, setBorderWidthMm] = useState(0);
-  const [gapXMm, setGapXMm] = useState(0.7);
-  const [gapYMm, setGapYMm] = useState(0.7);
+  // States for Arrangement Controls (with customized defaults)
+  const [borderWidthMm, setBorderWidthMm] = useState(0.4);
+  const [gapXMm, setGapXMm] = useState(0.4);
+  const [gapYMm, setGapYMm] = useState(0.0);
+  const [borderColor, setBorderColor] = useState("#000000");
 
   // Split photos into grid slots divided across pages (30 slots per page)
   const pages = buildSheetSlots(photos);
@@ -43,7 +44,7 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
   const handleExportPDF = async () => {
     setIsGenerating(true);
     try {
-      await exportToPDF(photos, 5, gapXMm, gapYMm, borderWidthMm);
+      await exportToPDF(photos, 5, gapXMm, gapYMm, borderWidthMm, borderColor);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert("PDF generation failed. Please ensure you have uploaded photos and try again.");
@@ -68,7 +69,7 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
         <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "16px", color: "white" }}>
           Arrangement Layout Controls
         </h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px" }}>
           <div className="control-group">
             <label id="border-width-slider-label">
               <span>Photo Border Width</span>
@@ -86,6 +87,30 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
                 aria-valuemax={5}
                 aria-valuenow={borderWidthMm}
                 onChange={(e) => setBorderWidthMm(Number(e.target.value))}
+              />
+            </div>
+          </div>
+
+          <div className="control-group">
+            <label id="border-color-picker-label">
+              <span>Border Color</span>
+              <span className="value-badge" style={{ backgroundColor: borderColor, color: borderColor === "#000000" ? "#ffffff" : "#000000", border: "1px solid #384260" }}>{borderColor}</span>
+            </label>
+            <div className="slider-row">
+              <input
+                type="color"
+                value={borderColor}
+                aria-labelledby="border-color-picker-label"
+                onChange={(e) => setBorderColor(e.target.value)}
+                style={{
+                  width: "100%",
+                  height: "36px",
+                  border: "1px solid #384260",
+                  borderRadius: "8px",
+                  background: "transparent",
+                  cursor: "pointer",
+                  padding: "0"
+                }}
               />
             </div>
           </div>
@@ -244,7 +269,7 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
 
               return (
                 <div key={`slot-${slot.id}-${index}`} className="grid-slot occupied">
-                  <div className="photo-container" style={{ background: "white" }}>
+                  <div className="photo-container" style={{ background: borderColor }}>
                     <div style={{
                       position: "absolute",
                       left: `${borderWidthMm}mm`,
