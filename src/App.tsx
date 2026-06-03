@@ -428,6 +428,37 @@ function App() {
   };
 
   // 9. NAVIGATION HELPERS
+  const handleNewProject = async () => {
+    if (!window.confirm("Are you sure you want to start a new project? This will delete all uploaded photos and settings.")) {
+      return;
+    }
+
+    try {
+      // 1. Revoke preview URLs to avoid browser memory leaks
+      photos.forEach((photo) => {
+        URL.revokeObjectURL(photo.previewUrl);
+      });
+
+      // 2. Clear IndexedDB
+      await PhotoDB.clear();
+
+      // 3. Clear localStorage
+      localStorage.removeItem("passport-photo-sheet-project");
+
+      // 4. Reset React States
+      setPhotos([]);
+      setSelectedIndex(0);
+      setCurrentStep(1);
+
+      // 5. Success feedback
+      setSaveFeedback("New Project Created ✓");
+      setTimeout(() => setSaveFeedback(null), 1500);
+    } catch (err) {
+      console.error("Failed to clear project:", err);
+      alert("Failed to start a new project. Please try again.");
+    }
+  };
+
   const goPrevious = () => {
     setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
   };
@@ -547,10 +578,32 @@ function App() {
   return (
     <div className="app">
       <div className="card">
-        <h1>Passport Photo Sheet Generator</h1>
-        <p className="subtitle">
-          Upload, crop, adjust, arrange and export passport photos on A4 paper.
-        </p>
+        <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", marginBottom: "32px" }}>
+          <div>
+            <h1>Passport Photo Sheet Generator</h1>
+            <p className="subtitle" style={{ marginBottom: 0 }}>
+              Upload, crop, adjust, arrange and export passport photos on A4 paper.
+            </p>
+          </div>
+          {photos.length > 0 && (
+            <button
+              className="btn-action btn-delete"
+              onClick={handleNewProject}
+              style={{
+                padding: "10px 18px",
+                borderRadius: "10px",
+                fontSize: "14px",
+                fontWeight: "600",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                margin: 0,
+              }}
+            >
+              🧹 New Project
+            </button>
+          )}
+        </div>
 
         {/* Global replace hidden inputs */}
         <input
