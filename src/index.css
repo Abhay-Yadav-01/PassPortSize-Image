@@ -1639,3 +1639,46 @@ body {
     height: 80px;
   }
 }
+
+/* Mobile view rearrangement for A4 preview page elements */
+@media (max-width: 768px) {
+  .arrangement-controls-panel {
+    order: 1;
+  }
+  .sheet-pagination {
+    order: 2;
+  }
+  .a4-sheet-container {
+    order: 3;
+  }
+  .copies-planner-panel {
+    order: 4;
+  }
+  .wizard-progress-bar {
+    order: 5;
+  }
+  .sheet-stats {
+    order: 6;
+  }
+}
+
+/* Grid layout for Crop and Adjust stage action buttons */
+.crop-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #2f374e;
+}
+
+.crop-actions-grid .btn-action {
+  width: 100%;
+  justify-content: center;
+  margin: 0;
+}
+
+.crop-actions-grid .btn-delete {
+  grid-column: span 2;
+  margin: 0;
+}

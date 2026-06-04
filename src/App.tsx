@@ -3,6 +3,7 @@ import AdjustWorkspace from "./components/AdjustWorkspace";
 import { CropArea, CropControls } from "./components/CropWorkspace";
 import A4SheetPreview from "./components/A4SheetPreview";
 import { PhotoDB } from "./utils/photoDb";
+import WizardProgressBar from "./components/WizardProgressBar";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -167,7 +168,7 @@ function App() {
         cropX: 0,
         cropY: 0,
         zoom: 1,
-        aspect: 35 / 40,
+        aspect: 35 / 45,
         brightness: 0,
         contrast: 0,
         saturation: 0,
@@ -249,7 +250,7 @@ function App() {
               cropX: 0,
               cropY: 0,
               zoom: 1,
-              aspect: 35 / 40,
+              aspect: 35 / 45,
               croppedArea: undefined,
               brightness: 0,
               contrast: 0,
@@ -364,7 +365,7 @@ function App() {
               cropX: 0,
               cropY: 0,
               zoom: 1,
-              aspect: 35 / 40,
+              aspect: 35 / 45,
               croppedArea: undefined,
             }
           : photo
@@ -578,32 +579,7 @@ function App() {
   return (
     <div className="app">
       <div className="card">
-        <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", marginBottom: "32px" }}>
-          <div>
-            <h1>Passport Photo Sheet Generator</h1>
-            <p className="subtitle" style={{ marginBottom: 0 }}>
-              Upload, crop, adjust, arrange and export passport photos on A4 paper.
-            </p>
-          </div>
-          {photos.length > 0 && (
-            <button
-              className="btn-action btn-delete"
-              onClick={handleNewProject}
-              style={{
-                padding: "10px 18px",
-                borderRadius: "10px",
-                fontSize: "14px",
-                fontWeight: "600",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                margin: 0,
-              }}
-            >
-              🧹 New Project
-            </button>
-          )}
-        </div>
+
 
         {/* Global replace hidden inputs */}
         <input
@@ -624,53 +600,7 @@ function App() {
           aria-label="Replace photo file"
         />
 
-        {/* Progress Tracker Header */}
-        <div className="wizard-progress-bar" role="navigation" aria-label="Wizard Steps">
-          <button
-            className={`wizard-step-node ${currentStep === 1 ? "active" : ""} ${
-              currentStep > 1 ? "completed" : ""
-            }`}
-            onClick={() => currentStep > 1 && setCurrentStep(1)}
-            disabled={currentStep === 1}
-          >
-            <span className="step-num">{currentStep > 1 ? "✓" : "1"}</span>
-            <span className="step-label">Select</span>
-          </button>
-          <div className="wizard-step-connector"></div>
-          
-          <button
-            className={`wizard-step-node ${currentStep === 2 ? "active" : ""} ${
-              currentStep > 2 ? "completed" : ""
-            }`}
-            onClick={() => currentStep > 2 && setCurrentStep(2)}
-            disabled={photos.length === 0 || currentStep === 2}
-          >
-            <span className="step-num">{currentStep > 2 ? "✓" : "2"}</span>
-            <span className="step-label">Crop</span>
-          </button>
-          <div className="wizard-step-connector"></div>
-          
-          <button
-            className={`wizard-step-node ${currentStep === 3 ? "active" : ""} ${
-              currentStep > 3 ? "completed" : ""
-            }`}
-            onClick={() => currentStep > 3 && setCurrentStep(3)}
-            disabled={photos.length === 0 || currentStep === 3}
-          >
-            <span className="step-num">{currentStep > 3 ? "✓" : "3"}</span>
-            <span className="step-label">Adjust</span>
-          </button>
-          <div className="wizard-step-connector"></div>
-          
-          <button
-            className={`wizard-step-node ${currentStep === 4 ? "active" : ""}`}
-            disabled={photos.length === 0 || currentStep === 4}
-            onClick={() => setCurrentStep(4)}
-          >
-            <span className="step-num">4</span>
-            <span className="step-label">Arrange</span>
-          </button>
-        </div>
+
 
         {/* STEP 1: SELECT PHOTOS */}
         {currentStep === 1 && (
@@ -742,6 +672,8 @@ function App() {
               )}
             </div>
 
+            <WizardProgressBar currentStep={currentStep} setCurrentStep={setCurrentStep} photosCount={photos.length} />
+
             {photos.length > 0 && (
               <div className="step-actions-footer">
                 <button
@@ -789,7 +721,7 @@ function App() {
                 )}
 
                 {selectedPhoto && (
-                  <div className="action-buttons-row">
+                  <div className="crop-actions-grid">
                     <button
                       className={`btn-action btn-save ${saveFeedback ? "success-flash" : ""}`}
                       onClick={triggerSaveFeedback}
@@ -847,6 +779,8 @@ function App() {
                 </button>
               ))}
             </div>
+
+            <WizardProgressBar currentStep={currentStep} setCurrentStep={setCurrentStep} photosCount={photos.length} />
           </div>
         )}
 
@@ -885,7 +819,7 @@ function App() {
                 )}
 
                 {selectedPhoto && (
-                  <div className="action-buttons-row">
+                  <div className="crop-actions-grid">
                     <button
                       className={`btn-action btn-save ${saveFeedback ? "success-flash" : ""}`}
                       onClick={triggerSaveFeedback}
@@ -943,6 +877,8 @@ function App() {
                 </button>
               ))}
             </div>
+
+            <WizardProgressBar currentStep={currentStep} setCurrentStep={setCurrentStep} photosCount={photos.length} />
           </div>
         )}
 
@@ -958,7 +894,13 @@ function App() {
               </div>
             </div>
             
-            <A4SheetPreview photos={photos} onUpdateCopies={updateCopiesCount} />
+            <A4SheetPreview 
+              photos={photos} 
+              onUpdateCopies={updateCopiesCount} 
+              currentStep={currentStep}
+              setCurrentStep={setCurrentStep}
+              onNewProject={handleNewProject}
+            />
           </div>
         )}
 

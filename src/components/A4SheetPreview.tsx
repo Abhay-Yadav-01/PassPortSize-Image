@@ -5,15 +5,28 @@ import {
 } from "../utils/sheetLayout";
 import { exportToPDF } from "../utils/pdfExport";
 import type { PhotoItem } from "../App";
+import WizardProgressBar from "./WizardProgressBar";
+
+type Step = 1 | 2 | 3 | 4;
 
 type A4SheetPreviewProps = {
   photos: PhotoItem[];
   onUpdateCopies: (id: string, change: number) => void;
+  currentStep: Step;
+  setCurrentStep: (step: Step) => void;
+  onNewProject: () => void;
 };
 
-export default function A4SheetPreview({ photos, onUpdateCopies }: A4SheetPreviewProps) {
+export default function A4SheetPreview({ 
+  photos, 
+  onUpdateCopies,
+  currentStep,
+  setCurrentStep,
+  onNewProject
+}: A4SheetPreviewProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showSliders, setShowSliders] = useState(false);
 
   // States for Arrangement Controls (with customized defaults)
   const [borderWidthMm, setBorderWidthMm] = useState(0.6);
@@ -65,165 +78,216 @@ export default function A4SheetPreview({ photos, onUpdateCopies }: A4SheetPrevie
         </div>
       )}
 
-      {/* Arrangement Controls Panel */}
+      {/* Collapsible Arrangement Controls Panel */}
       <div className="controls-panel arrangement-controls-panel" style={{ marginTop: 0 }}>
-        <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "16px", color: "white" }}>
-          Arrangement Layout Controls
-        </h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px", alignItems: "end" }}>
-          <div className="control-group">
-            <label id="border-width-slider-label">
-              <span>Photo Border Width</span>
-              <span className="value-badge">{borderWidthMm.toFixed(1)} mm</span>
-            </label>
-            <div className="slider-row">
-              <button
-                className="slider-adj-btn"
-                aria-label="Decrease border width by 0.1"
-                onClick={() => setBorderWidthMm((prev) => Math.max(0, Number((prev - 0.1).toFixed(1))))}
-              >
-                -
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="5"
-                step="0.1"
-                value={borderWidthMm}
-                aria-labelledby="border-width-slider-label"
-                aria-valuemin={0}
-                aria-valuemax={5}
-                aria-valuenow={borderWidthMm}
-                onChange={(e) => setBorderWidthMm(Number(e.target.value))}
-              />
-              <button
-                className="slider-adj-btn"
-                aria-label="Increase border width by 0.1"
-                onClick={() => setBorderWidthMm((prev) => Math.min(5, Number((prev + 0.1).toFixed(1))))}
-              >
-                +
-              </button>
-            </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+          <div 
+            onClick={() => setShowSliders((prev) => !prev)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setShowSliders((prev) => !prev);
+              }
+            }}
+            tabIndex={0}
+            role="button"
+            aria-expanded={showSliders}
+            style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: "12px", 
+              cursor: "pointer", 
+              userSelect: "none"
+            }}
+          >
+            <h3 style={{ fontSize: "16px", fontWeight: 700, color: "white", margin: 0 }}>
+              🛠️ Edit Borders and gaps
+            </h3>
+            <span style={{ fontSize: "12px", color: "#9aa3b2", transform: showSliders ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
           </div>
 
-          <div className="control-group">
-            <label id="border-color-picker-label">
-              <span>Border Color</span>
-              <span className="value-badge" style={{ backgroundColor: borderColor, color: borderColor === "#000000" ? "#ffffff" : "#000000", border: "1px solid #384260" }}>{borderColor}</span>
-            </label>
-            <div className="slider-row">
-              <input
-                type="color"
-                value={borderColor}
-                aria-labelledby="border-color-picker-label"
-                onChange={(e) => setBorderColor(e.target.value)}
-                style={{
-                  width: "100%",
-                  height: "36px",
-                  border: "1px solid #384260",
-                  borderRadius: "8px",
-                  background: "transparent",
-                  cursor: "pointer",
-                  padding: "0"
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="control-group">
-            <label id="gap-x-slider-label">
-              <span>Horizontal Gap</span>
-              <span className="value-badge">{gapXMm.toFixed(1)} mm</span>
-            </label>
-            <div className="slider-row">
-              <button
-                className="slider-adj-btn"
-                aria-label="Decrease horizontal gap by 0.1"
-                onClick={() => setGapXMm((prev) => Math.max(0, Number((prev - 0.1).toFixed(1))))}
-              >
-                -
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="10"
-                step="0.1"
-                value={gapXMm}
-                aria-labelledby="gap-x-slider-label"
-                aria-valuemin={0}
-                aria-valuemax={10}
-                aria-valuenow={gapXMm}
-                onChange={(e) => setGapXMm(Number(e.target.value))}
-              />
-              <button
-                className="slider-adj-btn"
-                aria-label="Increase horizontal gap by 0.1"
-                onClick={() => setGapXMm((prev) => Math.min(10, Number((prev + 0.1).toFixed(1))))}
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          <div className="control-group">
-            <label id="gap-y-slider-label">
-              <span>Vertical Gap</span>
-              <span className="value-badge">{gapYMm.toFixed(1)} mm</span>
-            </label>
-            <div className="slider-row">
-              <button
-                className="slider-adj-btn"
-                aria-label="Decrease vertical gap by 0.1"
-                onClick={() => setGapYMm((prev) => Math.max(0, Number((prev - 0.1).toFixed(1))))}
-              >
-                -
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="10"
-                step="0.1"
-                value={gapYMm}
-                aria-labelledby="gap-y-slider-label"
-                aria-valuemin={0}
-                aria-valuemax={10}
-                aria-valuenow={gapYMm}
-                onChange={(e) => setGapYMm(Number(e.target.value))}
-              />
-              <button
-                className="slider-adj-btn"
-                aria-label="Increase vertical gap by 0.1"
-                onClick={() => setGapYMm((prev) => Math.min(10, Number((prev + 0.1).toFixed(1))))}
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          <div className="control-group" style={{ gridColumn: "span 1" }}>
-            <label style={{ visibility: "hidden" }}>Export Action</label>
-            <div className="slider-row">
-              <button
-                className="btn-export-pdf"
-                disabled={totalOccupied === 0 || isGenerating}
-                onClick={handleExportPDF}
-                style={{
-                  width: "100%",
-                  height: "36px",
-                  padding: "0 16px",
-                  margin: 0,
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px"
-                }}
-              >
-                {isGenerating ? "Exporting..." : "📥 Export PDF"}
-              </button>
-            </div>
+          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+            <button
+              className="btn-export-pdf"
+              disabled={totalOccupied === 0 || isGenerating}
+              onClick={handleExportPDF}
+              style={{
+                height: "36px",
+                padding: "0 16px",
+                margin: 0,
+                fontSize: "14px",
+                width: "auto",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px"
+              }}
+            >
+              {isGenerating ? "Exporting..." : "📥 Export PDF"}
+            </button>
+            <button
+              className="btn-action btn-delete"
+              onClick={onNewProject}
+              style={{
+                height: "36px",
+                padding: "0 16px",
+                margin: 0,
+                fontSize: "14px",
+                fontWeight: "600",
+                width: "auto",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px"
+              }}
+            >
+              🧹 New Project
+            </button>
           </div>
         </div>
+
+        {showSliders && (
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", 
+            gap: "20px", 
+            alignItems: "end",
+            marginTop: "20px",
+            borderTop: "1px solid #2e374e",
+            paddingTop: "20px",
+            animation: "slideUp 0.2s ease-out"
+          }}>
+            <div className="control-group">
+              <label id="border-width-slider-label">
+                <span>Photo Border Width</span>
+                <span className="value-badge">{borderWidthMm.toFixed(1)} mm</span>
+              </label>
+              <div className="slider-row">
+                <button
+                  className="slider-adj-btn"
+                  aria-label="Decrease border width by 0.1"
+                  onClick={() => setBorderWidthMm((prev) => Math.max(0, Number((prev - 0.1).toFixed(1))))}
+                >
+                  -
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value={borderWidthMm}
+                  aria-labelledby="border-width-slider-label"
+                  aria-valuemin={0}
+                  aria-valuemax={5}
+                  aria-valuenow={borderWidthMm}
+                  onChange={(e) => setBorderWidthMm(Number(e.target.value))}
+                />
+                <button
+                  className="slider-adj-btn"
+                  aria-label="Increase border width by 0.1"
+                  onClick={() => setBorderWidthMm((prev) => Math.min(5, Number((prev + 0.1).toFixed(1))))}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div className="control-group">
+              <label id="border-color-picker-label">
+                <span>Border Color</span>
+                <span className="value-badge" style={{ backgroundColor: borderColor, color: borderColor === "#000000" ? "#ffffff" : "#000000", border: "1px solid #384260" }}>{borderColor}</span>
+              </label>
+              <div className="slider-row">
+                <input
+                  type="color"
+                  value={borderColor}
+                  aria-labelledby="border-color-picker-label"
+                  onChange={(e) => setBorderColor(e.target.value)}
+                  style={{
+                    width: "100%",
+                    height: "36px",
+                    border: "1px solid #384260",
+                    borderRadius: "8px",
+                    background: "transparent",
+                    cursor: "pointer",
+                    padding: "0"
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="control-group">
+              <label id="gap-x-slider-label">
+                <span>Horizontal Gap</span>
+                <span className="value-badge">{gapXMm.toFixed(1)} mm</span>
+              </label>
+              <div className="slider-row">
+                <button
+                  className="slider-adj-btn"
+                  aria-label="Decrease horizontal gap by 0.1"
+                  onClick={() => setGapXMm((prev) => Math.max(0, Number((prev - 0.1).toFixed(1))))}
+                >
+                  -
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value={gapXMm}
+                  aria-labelledby="gap-x-slider-label"
+                  aria-valuemin={0}
+                  aria-valuemax={10}
+                  aria-valuenow={gapXMm}
+                  onChange={(e) => setGapXMm(Number(e.target.value))}
+                />
+                <button
+                  className="slider-adj-btn"
+                  aria-label="Increase horizontal gap by 0.1"
+                  onClick={() => setGapXMm((prev) => Math.min(10, Number((prev + 0.1).toFixed(1))))}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div className="control-group">
+              <label id="gap-y-slider-label">
+                <span>Vertical Gap</span>
+                <span className="value-badge">{gapYMm.toFixed(1)} mm</span>
+              </label>
+              <div className="slider-row">
+                <button
+                  className="slider-adj-btn"
+                  aria-label="Decrease vertical gap by 0.1"
+                  onClick={() => setGapYMm((prev) => Math.max(0, Number((prev - 0.1).toFixed(1))))}
+                >
+                  -
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value={gapYMm}
+                  aria-labelledby="gap-y-slider-label"
+                  aria-valuemin={0}
+                  aria-valuemax={10}
+                  aria-valuenow={gapYMm}
+                  onChange={(e) => setGapYMm(Number(e.target.value))}
+                />
+                <button
+                  className="slider-adj-btn"
+                  aria-label="Increase vertical gap by 0.1"
+                  onClick={() => setGapYMm((prev) => Math.min(10, Number((prev + 0.1).toFixed(1))))}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Photo Copies Control Row/Grid */}
@@ -364,6 +428,8 @@ export default function A4SheetPreview({ photos, onUpdateCopies }: A4SheetPrevie
           </div>
         </div>
       </div>
+
+      <WizardProgressBar currentStep={currentStep} setCurrentStep={setCurrentStep} photosCount={photos.length} />
 
       {/* Dynamic Statistics Widgets (Moved below the A4 Sheet preview) */}
       <div className="sheet-stats" style={{ marginTop: "24px" }}>
