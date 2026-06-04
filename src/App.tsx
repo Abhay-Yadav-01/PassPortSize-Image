@@ -6,7 +6,7 @@ import { PhotoDB } from "./utils/photoDb";
 
 type Step = 1 | 2 | 3 | 4;
 
-type PhotoItem = {
+export type PhotoItem = {
   id: string;
   file: File;
   previewUrl: string;
@@ -958,7 +958,7 @@ function App() {
               </div>
             </div>
             
-            <A4SheetPreview photos={photos} />
+            <A4SheetPreview photos={photos} onUpdateCopies={updateCopiesCount} />
           </div>
         )}
 

@@ -2,15 +2,16 @@ import { useState } from "react";
 import { 
   buildSheetSlots, 
   calculateSheetLayout, 
-  type LayoutPhotoItem 
 } from "../utils/sheetLayout";
 import { exportToPDF } from "../utils/pdfExport";
+import type { PhotoItem } from "../App";
 
 type A4SheetPreviewProps = {
-  photos: LayoutPhotoItem[];
+  photos: PhotoItem[];
+  onUpdateCopies: (id: string, change: number) => void;
 };
 
-export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
+export default function A4SheetPreview({ photos, onUpdateCopies }: A4SheetPreviewProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -222,6 +223,44 @@ export default function A4SheetPreview({ photos }: A4SheetPreviewProps) {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Photo Copies Control Row/Grid */}
+      <div className="controls-panel copies-planner-panel" style={{ marginTop: "20px" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "16px", color: "white" }}>
+          Edit Copies Count
+        </h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px" }}>
+          {photos.map((photo) => (
+            <div key={photo.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#1b2030", padding: "10px 16px", borderRadius: "10px", border: "1px solid #2e374e", gap: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", overflow: "hidden" }}>
+                <div style={{ width: "40px", height: "45px", borderRadius: "6px", overflow: "hidden", background: "#090b0e", border: "1px solid #2d364d", flexShrink: 0 }}>
+                  <img src={photo.previewUrl} alt={photo.file.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+                <span style={{ fontSize: "14px", fontWeight: "600", color: "#e2e8f0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{photo.file.name}</span>
+              </div>
+              <div className="copies-control-row" style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                <button
+                  className="btn-copies-mod"
+                  onClick={() => onUpdateCopies(photo.id, -1)}
+                  aria-label={`Decrease copies count for ${photo.file.name}`}
+                  style={{ width: "28px", height: "28px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "700" }}
+                >
+                  -
+                </button>
+                <span className="copies-value-badge" style={{ minWidth: "30px", textAlign: "center", display: "inline-block" }}>{photo.copies}</span>
+                <button
+                  className="btn-copies-mod"
+                  onClick={() => onUpdateCopies(photo.id, 1)}
+                  aria-label={`Increase copies count for ${photo.file.name}`}
+                  style={{ width: "28px", height: "28px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "700" }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
