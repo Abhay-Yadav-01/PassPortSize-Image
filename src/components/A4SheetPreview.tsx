@@ -79,7 +79,7 @@ export default function A4SheetPreview({
       )}
 
       {/* Top Action Row (Export and New Project) */}
-      <div className="top-action-row" style={{ display: "flex", justifyContent: "flex-end", gap: "12px", width: "100%", marginBottom: "10px" }}>
+      <div className="top-action-row" style={{ display: "flex", justifyContent: "flex-end", gap: "12px", width: "100%", marginBottom: "8px" }}>
         <button
           className="btn-export-pdf"
           disabled={totalOccupied === 0 || isGenerating}
@@ -121,12 +121,12 @@ export default function A4SheetPreview({
 
       {/* Photo Copies Control Row/Grid */}
       <div className="controls-panel copies-planner-panel" style={{ marginTop: 0 }}>
-        <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "16px", color: "white" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px", color: "white" }}>
           Edit Copies Count
         </h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "10px" }}>
           {photos.map((photo) => (
-            <div key={photo.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#1b2030", padding: "10px 16px", borderRadius: "10px", border: "1px solid #2e374e", gap: "16px" }}>
+            <div key={photo.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#1b2030", padding: "6px 12px", borderRadius: "8px", border: "1px solid #2e374e", gap: "10px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", overflow: "hidden" }}>
                 <div style={{ width: "40px", height: "45px", borderRadius: "6px", overflow: "hidden", background: "#090b0e", border: "1px solid #2d364d", flexShrink: 0 }}>
                   <img src={photo.previewUrl} alt={photo.file.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -158,7 +158,7 @@ export default function A4SheetPreview({
       </div>
 
       {/* Collapsible Arrangement Controls Panel */}
-      <div className="controls-panel arrangement-controls-panel" style={{ marginTop: "20px" }}>
+      <div className="controls-panel arrangement-controls-panel" style={{ marginTop: "12px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
           <div 
             onClick={() => setShowSliders((prev) => !prev)}
@@ -430,7 +430,7 @@ export default function A4SheetPreview({
       <WizardProgressBar currentStep={currentStep} setCurrentStep={setCurrentStep} photosCount={photos.length} />
 
       {/* Dynamic Statistics Widgets (Moved below the A4 Sheet preview) */}
-      <div className="sheet-stats" style={{ marginTop: "24px" }}>
+      <div className="sheet-stats" style={{ marginTop: "12px" }}>
         <div className="stat-card">
           <span className="stat-label">Total Photo Copies</span>
           <span className="stat-value">{totalOccupied} Total</span>
