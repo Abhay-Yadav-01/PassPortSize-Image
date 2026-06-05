@@ -31,7 +31,7 @@ export default function A4SheetPreview({
   // States for Arrangement Controls (with customized defaults)
   const [borderWidthMm, setBorderWidthMm] = useState(0.6);
   const [gapXMm, setGapXMm] = useState(1.4);
-  const [gapYMm, setGapYMm] = useState(1.4);
+  const [gapYMm, setGapYMm] = useState(3.0);
   const [borderColor, setBorderColor] = useState("#000000");
 
   // Split photos into grid slots divided across pages (30 slots per page)
