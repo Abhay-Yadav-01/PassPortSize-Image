@@ -388,6 +388,18 @@ body {
   animation: slideUp 0.2s ease-out;
 }
 
+.arrangement-controls-panel {
+  border: 1.5px solid #3b82f6 !important;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.15), 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+  background: linear-gradient(135deg, #1b2030 0%, #1e263d 100%) !important;
+  transition: all 0.3s ease !important;
+}
+
+.arrangement-controls-panel:hover {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.22), 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -1642,16 +1654,16 @@ body {
 
 /* Mobile view rearrangement for A4 preview page elements */
 @media (max-width: 768px) {
-  .arrangement-controls-panel {
+  .copies-planner-panel {
     order: 1;
   }
-  .sheet-pagination {
+  .arrangement-controls-panel {
     order: 2;
   }
-  .a4-sheet-container {
+  .sheet-pagination {
     order: 3;
   }
-  .copies-planner-panel {
+  .a4-sheet-container {
     order: 4;
   }
   .wizard-progress-bar {
