@@ -23,7 +23,6 @@ type AdjustWorkspaceProps = {
   onBrightnessChange: (value: number) => void;
   onContrastChange: (value: number) => void;
   onSaturationChange: (value: number) => void;
-  onApplyPreset: (preset: PresetType) => void;
   onResetAll: () => void;
 };
 
@@ -34,7 +33,6 @@ function AdjustWorkspace({
   onBrightnessChange,
   onContrastChange,
   onSaturationChange,
-  onApplyPreset,
   onResetAll,
 }: AdjustWorkspaceProps) {
   // Accordion state to collapse/expand slider rows (defaults to brightness open)
@@ -44,34 +42,10 @@ function AdjustWorkspace({
     setActiveEdit((prev) => (prev === type ? null : type));
   };
 
-  // Detect active preset if current values match
-  const activePresetKey = Object.entries(ADJUSTMENT_PRESETS).find(
-    ([_, preset]) =>
-      preset.brightness === brightness &&
-      preset.contrast === contrast &&
-      preset.saturation === saturation
-  )?.[0];
-
   const formatValue = (val: number) => (val >= 0 ? `+${val}` : `${val}`);
 
   return (
     <div className="adjust-workspace">
-      {/* Presets Selection Row */}
-      <div className="control-group">
-        <label id="adjust-presets-label">Adjustment Presets</label>
-        <div className="presets-row" role="group" aria-labelledby="adjust-presets-label">
-          {Object.entries(ADJUSTMENT_PRESETS).map(([key, preset]) => (
-            <button
-              key={key}
-              className={`preset-btn ${activePresetKey === key ? "active" : ""}`}
-              aria-pressed={activePresetKey === key}
-              onClick={() => onApplyPreset(preset)}
-            >
-              {preset.name}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Brightness Adjustment row */}
       <div className="control-group" style={{ background: "#141722", padding: "12px 16px", borderRadius: "10px", border: "1px solid #2e374e" }}>

@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import AdjustWorkspace from "./components/AdjustWorkspace";
+import AdjustWorkspace, { ADJUSTMENT_PRESETS } from "./components/AdjustWorkspace";
 import { CropArea, CropControls } from "./components/CropWorkspace";
 import A4SheetPreview from "./components/A4SheetPreview";
 import { PhotoDB } from "./utils/photoDb";
@@ -845,6 +845,19 @@ function App() {
                 </div>
               ))}
 
+              {photos.length > 0 && (
+                <button
+                  type="button"
+                  className="proceed-crop-card"
+                  onClick={() => {
+                    setSelectedIndex(0);
+                    setCurrentStep(2);
+                  }}
+                >
+                  Proceed to Crop ➔
+                </button>
+              )}
+
               {photos.length < 5 && (
                 <button
                   type="button"
@@ -859,20 +872,6 @@ function App() {
             </div>
 
             <WizardProgressBar currentStep={currentStep} setCurrentStep={setCurrentStep} photosCount={photos.length} />
-
-            {photos.length > 0 && (
-              <div className="step-actions-footer">
-                <button
-                  className="btn-proceed-crop"
-                  onClick={() => {
-                    setSelectedIndex(0);
-                    setCurrentStep(2);
-                  }}
-                >
-                  Proceed to Crop ➔
-                </button>
-              </div>
-            )}
           </div>
         )}
 
@@ -985,9 +984,38 @@ function App() {
             </div>
 
             <div className="workspace-container">
-              <div className="preview-container" aria-label="Selected photo adjustment viewport">
-                {renderWorkspace()}
-              </div>
+              {selectedPhoto && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
+                  {/* Adjustment Presets Selection Row */}
+                  <div className="control-group" style={{ background: "#1b2030", padding: "10px 14px", borderRadius: "10px", border: "1px solid #2e374e", width: "100%" }}>
+                    <label id="adjust-presets-label" style={{ fontSize: "14px", fontWeight: "600", color: "#a2afc7", marginBottom: "8px", display: "block" }}>Adjustment Presets</label>
+                    <div className="presets-row" role="group" aria-labelledby="adjust-presets-label" style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      {Object.entries(ADJUSTMENT_PRESETS).map(([key, preset]) => {
+                        const activePresetKey = Object.entries(ADJUSTMENT_PRESETS).find(
+                          ([_, p]) =>
+                            p.brightness === selectedPhoto.brightness &&
+                            p.contrast === selectedPhoto.contrast &&
+                            p.saturation === selectedPhoto.saturation
+                        )?.[0];
+                        return (
+                          <button
+                            key={key}
+                            className={`preset-btn ${activePresetKey === key ? "active" : ""}`}
+                            aria-pressed={activePresetKey === key}
+                            onClick={() => applyAdjustmentPreset(preset)}
+                          >
+                            {preset.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="preview-container" aria-label="Selected photo adjustment viewport" style={{ marginTop: 0 }}>
+                    {renderWorkspace()}
+                  </div>
+                </div>
+              )}
 
               <div className="controls-panel">
                 {selectedPhoto && (
@@ -998,7 +1026,6 @@ function App() {
                     onBrightnessChange={(value) => updateAdjustment("brightness", value)}
                     onContrastChange={(value) => updateAdjustment("contrast", value)}
                     onSaturationChange={(value) => updateAdjustment("saturation", value)}
-                    onApplyPreset={applyAdjustmentPreset}
                     onResetAll={resetAdjustments}
                   />
                 )}
