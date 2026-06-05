@@ -1654,23 +1654,26 @@ body {
 
 /* Mobile view rearrangement for A4 preview page elements */
 @media (max-width: 768px) {
-  .copies-planner-panel {
+  .top-action-row {
     order: 1;
   }
-  .arrangement-controls-panel {
+  .copies-planner-panel {
     order: 2;
   }
-  .sheet-pagination {
+  .arrangement-controls-panel {
     order: 3;
   }
-  .a4-sheet-container {
+  .sheet-pagination {
     order: 4;
   }
-  .wizard-progress-bar {
+  .a4-sheet-container {
     order: 5;
   }
-  .sheet-stats {
+  .wizard-progress-bar {
     order: 6;
+  }
+  .sheet-stats {
+    order: 7;
   }
 }
 

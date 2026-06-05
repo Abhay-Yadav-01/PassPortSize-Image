@@ -78,6 +78,47 @@ export default function A4SheetPreview({
         </div>
       )}
 
+      {/* Top Action Row (Export and New Project) */}
+      <div className="top-action-row" style={{ display: "flex", justifyContent: "flex-end", gap: "12px", width: "100%", marginBottom: "10px" }}>
+        <button
+          className="btn-export-pdf"
+          disabled={totalOccupied === 0 || isGenerating}
+          onClick={handleExportPDF}
+          style={{
+            height: "36px",
+            padding: "0 16px",
+            margin: 0,
+            fontSize: "14px",
+            width: "auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px"
+          }}
+        >
+          {isGenerating ? "Exporting..." : "📥 Export PDF"}
+        </button>
+        <button
+          className="btn-action btn-delete"
+          onClick={onNewProject}
+          style={{
+            height: "36px",
+            padding: "0 16px",
+            margin: 0,
+            fontSize: "14px",
+            fontWeight: "600",
+            width: "auto",
+            borderRadius: "8px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px"
+          }}
+        >
+          🧹 New Project
+        </button>
+      </div>
+
       {/* Photo Copies Control Row/Grid */}
       <div className="controls-panel copies-planner-panel" style={{ marginTop: 0 }}>
         <h3 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "16px", color: "white" }}>
@@ -142,46 +183,6 @@ export default function A4SheetPreview({
               🛠️ Edit Borders and gaps
             </h3>
             <span style={{ fontSize: "12px", color: "#9aa3b2", transform: showSliders ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
-          </div>
-
-          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-            <button
-              className="btn-export-pdf"
-              disabled={totalOccupied === 0 || isGenerating}
-              onClick={handleExportPDF}
-              style={{
-                height: "36px",
-                padding: "0 16px",
-                margin: 0,
-                fontSize: "14px",
-                width: "auto",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px"
-              }}
-            >
-              {isGenerating ? "Exporting..." : "📥 Export PDF"}
-            </button>
-            <button
-              className="btn-action btn-delete"
-              onClick={onNewProject}
-              style={{
-                height: "36px",
-                padding: "0 16px",
-                margin: 0,
-                fontSize: "14px",
-                fontWeight: "600",
-                width: "auto",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px"
-              }}
-            >
-              🧹 New Project
-            </button>
           </div>
         </div>
 
