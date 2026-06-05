@@ -6,7 +6,7 @@
 export class PhotoDB {
   private static dbName = "PassportPhotoDB";
   private static storeName = "photos";
-  private static version = 1;
+  private static version = 2;
 
   private static open(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
