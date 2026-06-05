@@ -1,9 +1,10 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import AdjustWorkspace from "./components/AdjustWorkspace";
 import { CropArea, CropControls } from "./components/CropWorkspace";
 import A4SheetPreview from "./components/A4SheetPreview";
 import { PhotoDB } from "./utils/photoDb";
 import WizardProgressBar from "./components/WizardProgressBar";
+import { getImageDimensions, calculateCenteredCropArea, adjustCropAreaAspect } from "./utils/cropMigration";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -32,6 +33,10 @@ export type PhotoItem = {
   brightness: number;
   contrast: number;
   saturation: number;
+
+  // Background state
+  backgroundRemoved?: boolean;
+  bgReplacementColor?: string;
 };
 
 type StoredProjectMetadata = {
@@ -52,6 +57,10 @@ type StoredProjectMetadata = {
   brightness: number;
   contrast: number;
   saturation: number;
+  originalWidth?: number;
+  originalHeight?: number;
+  backgroundRemoved?: boolean;
+  bgReplacementColor?: string;
 };
 
 function App() {
@@ -78,26 +87,60 @@ function App() {
         if (stored) {
           const parsed = JSON.parse(stored);
           const metadataList: StoredProjectMetadata[] = parsed.photosMetadata || [];
-          const step: Step = parsed.currentStep || 1;
+          const rawStep = parsed.currentStep || 1;
+          let step: Step = 1;
+          if (rawStep === 5) {
+            step = 4;
+          } else if (rawStep === 4) {
+            step = 2;
+          } else {
+            step = rawStep as Step;
+          }
           const idx: number = parsed.selectedIndex || 0;
 
           const restoredPhotos: PhotoItem[] = [];
           for (const meta of metadataList) {
             const file = await PhotoDB.getFile(meta.id);
             if (file) {
+              const previewUrl = URL.createObjectURL(file);
+              
+              // Dynamic loading of image dimensions if missing
+              let originalWidth = meta.originalWidth;
+              let originalHeight = meta.originalHeight;
+              if (originalWidth === undefined || originalHeight === undefined) {
+                try {
+                  const dims = await getImageDimensions(previewUrl);
+                  originalWidth = dims.width;
+                  originalHeight = dims.height;
+                } catch (e) {
+                  console.error("Failed to read image dimensions on restore:", e);
+                }
+              }
+
+              // Fallback calculation for centered croppedArea if missing in V1
+              const croppedArea = meta.croppedArea || calculateCenteredCropArea(
+                originalWidth || 0,
+                originalHeight || 0,
+                meta.aspect ?? 35 / 45
+              );
+
               restoredPhotos.push({
                 id: meta.id,
                 file,
-                previewUrl: URL.createObjectURL(file),
+                previewUrl,
                 copies: meta.copies,
-                cropX: meta.cropX,
-                cropY: meta.cropY,
-                zoom: meta.zoom,
+                cropX: meta.cropX ?? 0,
+                cropY: meta.cropY ?? 0,
+                zoom: meta.zoom ?? 1,
                 aspect: meta.aspect,
-                croppedArea: meta.croppedArea,
+                croppedArea,
                 brightness: meta.brightness,
                 contrast: meta.contrast,
                 saturation: meta.saturation,
+                originalWidth,
+                originalHeight,
+                backgroundRemoved: meta.backgroundRemoved ?? false,
+                bgReplacementColor: meta.bgReplacementColor ?? "#ffffff",
               });
             }
           }
@@ -114,36 +157,45 @@ function App() {
         setIsLoading(false);
       }
     }
+    
     restoreProject();
   }, []);
 
-  // 2. AUTO-SAVE METADATA TO LOCALSTORAGE
+  // 2. AUTO-SAVE METADATA TO LOCALSTORAGE (Debounced to avoid lag during drag/pan)
   useEffect(() => {
     if (isLoading) return;
 
-    const metadataList: StoredProjectMetadata[] = photos.map((p) => ({
-      id: p.id,
-      fileName: p.file.name,
-      fileType: p.file.type,
-      copies: p.copies,
-      cropX: p.cropX,
-      cropY: p.cropY,
-      zoom: p.zoom,
-      aspect: p.aspect,
-      croppedArea: p.croppedArea,
-      brightness: p.brightness,
-      contrast: p.contrast,
-      saturation: p.saturation,
-    }));
+    const timer = setTimeout(() => {
+      const metadataList: StoredProjectMetadata[] = photos.map((p) => ({
+        id: p.id,
+        fileName: p.file.name,
+        fileType: p.file.type,
+        copies: p.copies,
+        cropX: p.cropX,
+        cropY: p.cropY,
+        zoom: p.zoom,
+        aspect: p.aspect,
+        croppedArea: p.croppedArea,
+        brightness: p.brightness,
+        contrast: p.contrast,
+        saturation: p.saturation,
+        originalWidth: p.originalWidth,
+        originalHeight: p.originalHeight,
+        backgroundRemoved: p.backgroundRemoved ?? false,
+        bgReplacementColor: p.bgReplacementColor ?? "#ffffff",
+      }));
 
-    localStorage.setItem(
-      "passport-photo-sheet-project",
-      JSON.stringify({
-        currentStep,
-        selectedIndex,
-        photosMetadata: metadataList,
-      })
-    );
+      localStorage.setItem(
+        "passport-photo-sheet-project",
+        JSON.stringify({
+          currentStep,
+          selectedIndex,
+          photosMetadata: metadataList,
+        })
+      );
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, [photos, selectedIndex, currentStep, isLoading]);
 
   // 3. UPLOAD ACTION (Limit of 5)
@@ -160,18 +212,34 @@ function App() {
       // Write file blob to IndexedDB
       await PhotoDB.saveFile(id, file);
 
+      const previewUrl = URL.createObjectURL(file);
+      let originalWidth = 0;
+      let originalHeight = 0;
+      try {
+        const dims = await getImageDimensions(previewUrl);
+        originalWidth = dims.width;
+        originalHeight = dims.height;
+      } catch (e) {
+        console.error("Failed to read image dimensions on upload:", e);
+      }
+
       newPhotos.push({
         id,
         file,
-        previewUrl: URL.createObjectURL(file),
+        previewUrl,
         copies: 6,
         cropX: 0,
         cropY: 0,
         zoom: 1,
         aspect: 35 / 45,
+        croppedArea: calculateCenteredCropArea(originalWidth, originalHeight, 35 / 45),
         brightness: 0,
         contrast: 0,
         saturation: 0,
+        originalWidth,
+        originalHeight,
+        backgroundRemoved: false,
+        bgReplacementColor: "#ffffff",
       });
     }
 
@@ -215,13 +283,29 @@ function App() {
     // Overwrite blob in IndexedDB
     await PhotoDB.saveFile(id, file);
 
+    const previewUrl = URL.createObjectURL(file);
+    let originalWidth = 0;
+    let originalHeight = 0;
+    try {
+      const dims = await getImageDimensions(previewUrl);
+      originalWidth = dims.width;
+      originalHeight = dims.height;
+    } catch (e) {
+      console.error("Failed to read dimensions on keep replacement:", e);
+    }
+
     setPhotos((prev) =>
       prev.map((photo) =>
         photo.id === id
           ? {
               ...photo,
               file,
-              previewUrl: URL.createObjectURL(file),
+              previewUrl,
+              originalWidth,
+              originalHeight,
+              croppedArea: calculateCenteredCropArea(originalWidth, originalHeight, photo.aspect),
+              backgroundRemoved: false,
+              bgReplacementColor: "#ffffff",
             }
           : photo
       )
@@ -240,21 +324,36 @@ function App() {
     // Overwrite blob in IndexedDB
     await PhotoDB.saveFile(id, file);
 
+    const previewUrl = URL.createObjectURL(file);
+    let originalWidth = 0;
+    let originalHeight = 0;
+    try {
+      const dims = await getImageDimensions(previewUrl);
+      originalWidth = dims.width;
+      originalHeight = dims.height;
+    } catch (e) {
+      console.error("Failed to read dimensions on reset replacement:", e);
+    }
+
     setPhotos((prev) =>
       prev.map((photo) =>
         photo.id === id
           ? {
               ...photo,
               file,
-              previewUrl: URL.createObjectURL(file),
+              previewUrl,
               cropX: 0,
               cropY: 0,
               zoom: 1,
               aspect: 35 / 45,
-              croppedArea: undefined,
+              croppedArea: calculateCenteredCropArea(originalWidth, originalHeight, 35 / 45),
               brightness: 0,
               contrast: 0,
               saturation: 0,
+              originalWidth,
+              originalHeight,
+              backgroundRemoved: false,
+              bgReplacementColor: "#ffffff",
             }
           : photo
       )
@@ -300,63 +399,114 @@ function App() {
   };
 
   // 7. CROP WORKSPACE MUTATIONS (Auto-saves instantly to photos state)
-  const updateCrop = (crop: { x: number; y: number }) => {
-    setPhotos((prev) =>
-      prev.map((photo, index) =>
-        index === selectedIndex
+  const updateCropOffsets = (id: string, crop: { x: number; y: number }) => {
+    setPhotos((prev) => {
+      const currentPhoto = prev.find((p) => p.id === id);
+      if (currentPhoto && Math.abs(currentPhoto.cropX - crop.x) < 0.01 && Math.abs(currentPhoto.cropY - crop.y) < 0.01) {
+        return prev;
+      }
+      return prev.map((photo) =>
+        photo.id === id
           ? {
               ...photo,
               cropX: crop.x,
               cropY: crop.y,
             }
           : photo
-      )
-    );
+      );
+    });
   };
 
-  const updateZoom = (zoom: number) => {
-    setPhotos((prev) =>
-      prev.map((photo, index) =>
-        index === selectedIndex
+  const updateCropZoom = (id: string, zoom: number) => {
+    setPhotos((prev) => {
+      const currentPhoto = prev.find((p) => p.id === id);
+      if (currentPhoto && Math.abs(currentPhoto.zoom - zoom) < 0.01) {
+        return prev;
+      }
+      return prev.map((photo) =>
+        photo.id === id
           ? {
               ...photo,
               zoom,
             }
           : photo
-      )
-    );
+      );
+    });
   };
 
   const updateAspect = (aspect: number | undefined) => {
     setPhotos((prev) =>
-      prev.map((photo, index) =>
-        index === selectedIndex
-          ? {
-              ...photo,
-              aspect,
-            }
-          : photo
-      )
+      prev.map((photo, index) => {
+        if (index === selectedIndex) {
+          const imageWidth = photo.originalWidth ?? 0;
+          const imageHeight = photo.originalHeight ?? 0;
+
+          let newCroppedArea = photo.croppedArea;
+          if (!newCroppedArea) {
+            newCroppedArea = calculateCenteredCropArea(imageWidth, imageHeight, aspect);
+          } else {
+            newCroppedArea = adjustCropAreaAspect(newCroppedArea, aspect, imageWidth, imageHeight);
+          }
+
+          return {
+            ...photo,
+            aspect,
+            croppedArea: newCroppedArea,
+            cropX: 0,
+            cropY: 0,
+            zoom: 1,
+          };
+        }
+        return photo;
+      })
     );
   };
 
   const updateCropComplete = (
-    croppedArea: { x: number; y: number; width: number; height: number },
-    _croppedAreaPixels: { x: number; y: number; width: number; height: number }
+    croppedArea: { x: number; y: number; width: number; height: number }
   ) => {
-    setPhotos((prev) =>
-      prev.map((photo, index) =>
-        index === selectedIndex
-          ? {
+    setPhotos((prev) => {
+      const currentPhoto = prev[selectedIndex];
+      if (currentPhoto && currentPhoto.croppedArea) {
+        const ca = currentPhoto.croppedArea;
+        const diffX = Math.abs(ca.x - croppedArea.x);
+        const diffY = Math.abs(ca.y - croppedArea.y);
+        const diffW = Math.abs(ca.width - croppedArea.width);
+        const diffH = Math.abs(ca.height - croppedArea.height);
+        
+        if (diffX < 0.01 && diffY < 0.01 && diffW < 0.01 && diffH < 0.01) {
+          return prev;
+        }
+      }
+
+      return prev.map((photo, index) => {
+        if (index === selectedIndex) {
+          if (photo.aspect !== undefined) {
+            // Fixed aspect mode: preserve cropX, cropY, zoom
+            return {
               ...photo,
               croppedArea,
-            }
-          : photo
-      )
-    );
+            };
+          } else {
+            // Free crop mode: reset pan & zoom
+            return {
+              ...photo,
+              croppedArea,
+              cropX: 0,
+              cropY: 0,
+              zoom: 1,
+            };
+          }
+        }
+        return photo;
+      });
+    });
   };
 
   const resetCrop = () => {
+    const photo = photos[selectedIndex];
+    const width = photo?.originalWidth ?? 0;
+    const height = photo?.originalHeight ?? 0;
     setPhotos((prev) =>
       prev.map((photo, index) =>
         index === selectedIndex
@@ -366,7 +516,7 @@ function App() {
               cropY: 0,
               zoom: 1,
               aspect: 35 / 45,
-              croppedArea: undefined,
+              croppedArea: calculateCenteredCropArea(width, height, 35 / 45),
             }
           : photo
       )
@@ -374,6 +524,8 @@ function App() {
     setSaveFeedback("Crop Reset ✓");
     setTimeout(() => setSaveFeedback(null), 1500);
   };
+
+
 
   // 8. ADJUST WORKSPACE MUTATIONS (Auto-saves instantly to photos state)
   const applyAdjustmentPreset = (preset: {
@@ -469,12 +621,20 @@ function App() {
   };
 
   const triggerSaveFeedback = () => {
-    setSaveFeedback(currentStep === 2 ? "Crop Saved ✓" : "Adjustments Saved ✓");
+    setSaveFeedback(
+      currentStep === 2
+        ? "Crop Saved ✓"
+        : "Adjustments Saved ✓"
+    );
     setTimeout(() => setSaveFeedback(null), 1500);
   };
 
   const handleSaveAndNext = () => {
-    setSaveFeedback(currentStep === 2 ? "Crop Saved ✓" : "Adjustments Saved ✓");
+    setSaveFeedback(
+      currentStep === 2
+        ? "Crop Saved ✓"
+        : "Adjustments Saved ✓"
+    );
     setTimeout(() => setSaveFeedback(null), 1500);
 
     if (selectedIndex < photos.length - 1) {
@@ -491,6 +651,23 @@ function App() {
   };
 
   const selectedPhoto = photos[selectedIndex];
+
+  // Memoized handlers to avoid re-creating inline callbacks during dragging
+  const handleCropChange = useCallback((crop: { x: number; y: number }) => {
+    if (selectedPhoto) {
+      updateCropOffsets(selectedPhoto.id, crop);
+    }
+  }, [selectedPhoto?.id]);
+
+  const handleZoomChange = useCallback((zoom: number) => {
+    if (selectedPhoto) {
+      updateCropZoom(selectedPhoto.id, zoom);
+    }
+  }, [selectedPhoto?.id]);
+
+  const handleCropComplete = useCallback((croppedArea: { x: number; y: number; width: number; height: number }) => {
+    updateCropComplete(croppedArea);
+  }, [selectedIndex]);
 
   // Render cropper image or adjustment preview image
   const renderWorkspace = () => {
@@ -525,22 +702,24 @@ function App() {
             `,
           };
 
-      const aspect = selectedPhoto.aspect ?? 35 / 40;
+      const aspect = selectedPhoto.aspect ?? 35 / 45;
 
       return (
         <div
           className="photo-container"
           style={{
             aspectRatio: aspect,
+            width: "auto",
             height: "100%",
             maxHeight: "100%",
             maxWidth: "100%",
             position: "relative",
+            overflow: "hidden",
           }}
         >
           <img
             src={selectedPhoto.previewUrl}
-            alt="Adjust preview"
+            alt="Workspace preview"
             style={imageStyle}
           />
         </div>
@@ -549,15 +728,22 @@ function App() {
 
     if (currentStep === 2) {
       return (
-        <CropArea
-          imageUrl={selectedPhoto.previewUrl}
-          crop={{ x: selectedPhoto.cropX, y: selectedPhoto.cropY }}
-          zoom={selectedPhoto.zoom}
-          aspect={selectedPhoto.aspect}
-          onCropChange={updateCrop}
-          onZoomChange={updateZoom}
-          onCropComplete={updateCropComplete}
-        />
+        <div style={{ position: "relative", width: "100%", height: "100%" }}>
+          <CropArea
+            imageUrl={selectedPhoto.previewUrl}
+            croppedArea={selectedPhoto.croppedArea}
+            aspect={selectedPhoto.aspect}
+            cropX={selectedPhoto.cropX}
+            cropY={selectedPhoto.cropY}
+            zoom={selectedPhoto.zoom}
+            originalWidth={selectedPhoto.originalWidth}
+            originalHeight={selectedPhoto.originalHeight}
+            onCropChange={handleCropChange}
+            onZoomChange={handleZoomChange}
+            onCropComplete={handleCropComplete}
+          />
+
+        </div>
       );
     }
 
@@ -713,15 +899,16 @@ function App() {
               <div className="controls-panel">
                 {selectedPhoto && (
                   <CropControls
-                    zoom={selectedPhoto.zoom}
                     aspect={selectedPhoto.aspect}
-                    onZoomChange={updateZoom}
                     onAspectChange={updateAspect}
+                    zoom={selectedPhoto.zoom}
+                    onZoomChange={(zoom) => updateCropZoom(selectedPhoto.id, zoom)}
                   />
                 )}
 
                 {selectedPhoto && (
                   <div className="crop-actions-grid">
+
                     <button
                       className={`btn-action btn-save ${saveFeedback ? "success-flash" : ""}`}
                       onClick={triggerSaveFeedback}
