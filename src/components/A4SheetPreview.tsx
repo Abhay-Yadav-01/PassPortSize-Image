@@ -190,11 +190,11 @@ export default function A4SheetPreview({
           <div style={{ 
             display: "grid", 
             gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", 
-            gap: "20px", 
-            alignItems: "end",
-            marginTop: "20px",
+            gap: "14px", 
+            alignItems: "center",
+            marginTop: "16px",
             borderTop: "1px solid #2e374e",
-            paddingTop: "20px",
+            paddingTop: "16px",
             animation: "slideUp 0.2s ease-out"
           }}>
             <div className="control-group">
@@ -232,28 +232,25 @@ export default function A4SheetPreview({
               </div>
             </div>
 
-            <div className="control-group">
-              <label id="border-color-picker-label">
+            <div className="control-group" style={{ gap: 0 }}>
+              <label id="border-color-picker-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", margin: 0 }}>
                 <span>Border Color</span>
-                <span className="value-badge" style={{ backgroundColor: borderColor, color: borderColor === "#000000" ? "#ffffff" : "#000000", border: "1px solid #384260" }}>{borderColor}</span>
-              </label>
-              <div className="slider-row">
                 <input
                   type="color"
                   value={borderColor}
+                  className="color-swatch-picker"
                   aria-labelledby="border-color-picker-label"
                   onChange={(e) => setBorderColor(e.target.value)}
                   style={{
-                    width: "100%",
-                    height: "36px",
+                    width: "40px",
+                    height: "26px",
                     border: "1px solid #384260",
-                    borderRadius: "8px",
-                    background: "transparent",
+                    borderRadius: "6px",
                     cursor: "pointer",
-                    padding: "0"
+                    padding: 0
                   }}
                 />
-              </div>
+              </label>
             </div>
 
             <div className="control-group">

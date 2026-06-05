@@ -1697,3 +1697,31 @@ body {
   grid-column: span 2;
   margin: 0;
 }
+
+/* Swatch-style color picker style */
+.color-swatch-picker {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background: transparent;
+  border: 1px solid #384260;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.color-swatch-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-swatch-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 5px;
+}
+
+.color-swatch-picker::-moz-color-swatch {
+  border: none;
+  border-radius: 5px;
+}
