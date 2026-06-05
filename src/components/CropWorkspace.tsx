@@ -381,67 +381,17 @@ export function CropArea({
 type CropControlsProps = {
   aspect: number | undefined;
   onAspectChange: (aspect: number | undefined) => void;
-  zoom: number;
-  onZoomChange: (zoom: number) => void;
 };
 
 export function CropControls({
   aspect,
   onAspectChange,
-  zoom,
-  onZoomChange,
 }: CropControlsProps) {
   const [showAspects, setShowAspects] = useState(false);
   const activeTemplate = getTemplateByAspect(aspect);
 
   return (
     <div className="crop-controls">
-      {/* Dynamic Guideline Notification badge */}
-      <div 
-        className="template-bg-badge" 
-        style={{ 
-          background: "rgba(59, 130, 246, 0.08)", 
-          border: "1px solid rgba(59, 130, 246, 0.2)", 
-          color: "#93c5fd", 
-          padding: "12px 16px", 
-          borderRadius: "10px", 
-          fontSize: "13px", 
-          lineHeight: "1.5", 
-          marginBottom: "16px" 
-        }}
-      >
-        <strong>{activeTemplate.name} rule:</strong> {activeTemplate.bgRequirement}
-      </div>
-
-      {/* Zoom control slider for react-easy-crop */}
-      {aspect !== undefined && (
-        <div 
-          className="control-group zoom-control-group" 
-          style={{ 
-            background: "#141722", 
-            padding: "12px 16px", 
-            borderRadius: "10px", 
-            border: "1px solid #2e374e",
-            marginBottom: "16px" 
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "14px", fontWeight: "600", color: "#e2e8f0" }}>Zoom</span>
-            <span className="value-badge">{zoom.toFixed(1)}x</span>
-          </div>
-          <input
-            type="range"
-            min={1}
-            max={3}
-            step={0.1}
-            value={zoom}
-            onChange={(e) => onZoomChange(parseFloat(e.target.value))}
-            style={{ width: "100%", accentColor: "#3b82f6", cursor: "pointer" }}
-            aria-label="Zoom photo"
-          />
-        </div>
-      )}
-
       {/* Collapsible Aspect Ratio Accordion */}
       <div className="control-group" style={{ background: "#141722", padding: "12px 16px", borderRadius: "10px", border: "1px solid #2e374e" }}>
         <label 

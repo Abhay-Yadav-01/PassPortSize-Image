@@ -901,8 +901,6 @@ function App() {
                   <CropControls
                     aspect={selectedPhoto.aspect}
                     onAspectChange={updateAspect}
-                    zoom={selectedPhoto.zoom}
-                    onZoomChange={(zoom) => updateCropZoom(selectedPhoto.id, zoom)}
                   />
                 )}
 
